@@ -1,0 +1,11 @@
+POST http://localhost:3003/api/blogs
+Content-Type: application/json
+Authorization: Bearer 
+
+{
+    "title": "Puunkaato opas 3",
+    "author": "Pasi",
+    "url": "fifd",
+    "likes": 22020
+}
+
