@@ -1,46 +1,54 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
+import PropTypes from 'prop-types'
 
-const Blog = ({ blog, handleLike, handleDelete, loggedUser }) => {
-  const [showDetails, setShowDetails] = useState(false)
+const Blog = ({ blog, like, canRemove, remove }) => {
+  const [visible, setVisible] = useState(false)
 
-  const handleDeleteClick = () => {
-    if (window.confirm(`Are you sure you want to delete ${blog.title}?`)) {
-      handleDelete(blog.id)
-    }
-  }
-
-  const toggleDetails = () => {
-    setShowDetails(!showDetails)
-  }
-
-  const blogStyle = {
-    paddingTop: 10,
-    paddingLeft: 2,
-    border: 'solid',
-    borderWidth: 1,
-    marginBottom: 5,
+  const style = {
+    marginBottom: 2,
+    padding: 5,
+    borderStyle: 'solid',
   }
 
   return (
-    <div style={blogStyle} className="blog">
-      <div className="title">
-        {blog.title} {blog.author}
-        <button onClick={toggleDetails}>{showDetails ? 'Hide' : 'View'}</button>
-      </div>
-      {showDetails && (
-        <div className="details">
-          <div>{blog.url}</div>
+    <div style={style} className="blog">
+      {blog.title} {blog.author}
+      <button onClick={() => setVisible(!visible)}>
+        {visible ? 'hide' : 'show'}
+      </button>
+      {visible && (
+        <div>
           <div>
-            {blog.likes}{' '}
-            <button onClick={() => handleLike(blog.id)}>like </button>
+            {' '}
+            <a href={blog.url}> {blog.url}</a>{' '}
           </div>
-          <div>{blog.user.name}</div>
-          {loggedUser && blog.user.username === loggedUser.username && (
-            <button onClick={handleDeleteClick}>delete</button>
-          )}
+          <div>
+            likes {blog.likes} <button onClick={like}>like</button>
+          </div>
+          <div>{blog.user && blog.user.name}</div>
+          {canRemove && <button onClick={remove}>delete</button>}
         </div>
       )}
     </div>
   )
 }
+
+Blog.propTypes = {
+  like: PropTypes.func.isRequired,
+  remove: PropTypes.func.isRequired,
+  canRemove: PropTypes.bool,
+  blog: PropTypes.shape({
+    title: PropTypes.string,
+    author: PropTypes.string,
+    url: PropTypes.string,
+    likes: PropTypes.number,
+    user: PropTypes.shape({
+      userName: PropTypes.string,
+      name: PropTypes.string,
+      id: PropTypes.string,
+    }),
+    id: PropTypes.string,
+  }),
+}
+
 export default Blog
