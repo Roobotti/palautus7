@@ -48,6 +48,15 @@ export const likeBlog = (object) => {
   return async (dispatch) => {
     const blog = await blogService.update(toLike)
     dispatch(replaceBlog(blog))
+    console.log('like')
+  }
+}
+
+export const commentBlog = (blog, comment) => {
+  return async (dispatch) => {
+    const nblog = await blogService.commentBlog(blog, comment)
+    dispatch(replaceBlog(nblog))
+    console.log('result')
   }
 }
 

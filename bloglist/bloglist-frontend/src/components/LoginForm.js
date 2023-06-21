@@ -1,41 +1,46 @@
-import PropTypes from 'prop-types'
+import { useContext } from 'react'
+import { LoginContext } from '../context/loginContext'
+import { Button, InputField } from '../styled'
 
-const LoginForm = ({
-  handleSubmit,
-  handleUsernameChange,
-  handlePasswordChange,
-  username,
-  password,
-}) => (
-  <div>
-    <h2>Login</h2>
-    <form onSubmit={handleSubmit}>
-      <div>
-        username
-        <input value={username} id="username" onChange={handleUsernameChange} />
-      </div>
-      <div>
-        password
-        <input
-          type="password"
-          value={password}
-          id="password"
-          onChange={handlePasswordChange}
-        />
-      </div>
-      <button id="login-button" type="submit">
-        login
-      </button>
-    </form>
-  </div>
-)
+const LoginForm = () => {
+  const {
+    handleSubmit,
+    handleUsernameChange,
+    handlePasswordChange,
+    username,
+    password,
+  } = useContext(LoginContext)
 
-LoginForm.propTypes = {
-  handleSubmit: PropTypes.func.isRequired,
-  handleUsernameChange: PropTypes.func.isRequired,
-  handlePasswordChange: PropTypes.func.isRequired,
-  username: PropTypes.string.isRequired,
-  password: PropTypes.string.isRequired,
+  const passwordIsInvalid = password.length < 4
+  const usernameIsInvalid = username.length < 4
+  return (
+    <div>
+      <h2>Login</h2>
+      <form onSubmit={handleSubmit}>
+        <div>
+          username:
+          <InputField
+            value={username}
+            onChange={handleUsernameChange}
+            isInvalid={usernameIsInvalid}
+          />
+        </div>
+        <br />
+        <div>
+          password:
+          <InputField
+            type="password"
+            value={password}
+            onChange={handlePasswordChange}
+            isInvalid={passwordIsInvalid}
+          />
+        </div>
+        <Button id="login-button" type="submit">
+          login
+        </Button>
+      </form>
+    </div>
+  )
 }
 
 export default LoginForm

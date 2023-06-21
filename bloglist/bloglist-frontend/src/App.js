@@ -1,13 +1,16 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
+import BlogDetails from './components/Blog'
+import { Routes, Route, Link, useMatch, Navigate } from 'react-router-dom'
 
-import Blog from './components/Blog'
-import LoginForm from './components/LoginForm'
-import BlogForm from './components/BlogForm'
+import Blogs from './components/Blogs'
+import Users from './components/Users'
+import UserPage from './components/UserPage'
+import Home from './components/Home'
+
 import Notification from './components/Notification'
-import Togglable from './components/Togglable'
+import Login from './components/Login'
 
-import loginService from './services/login'
 import storage from './services/storage'
 import { setUser, removeUser } from './reducers/userReducer'
 
@@ -19,6 +22,7 @@ import {
 } from './reducers/blogReducer'
 
 import { setNotification } from './actions/notification'
+import { Button, Navigation, Page, RedButton, StyledLink } from './styled'
 
 const App = () => {
   const dispatch = useDispatch()
@@ -26,14 +30,14 @@ const App = () => {
   const newMessage = useSelector((state) => state.notification)
   const blogs = useSelector((state) => state.blogs)
   const user = useSelector((state) => state.user)
+  const [timeoutId, setTimeoutId] = useState(null)
 
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  //const [loginFormVisible, setLoginFormVisible] = useState(false)
+  const BlogFormRef = useRef()
+  const LoginFormRef = useRef()
 
-  const [oldTimeout, setOldTimeout] = useState(0)
   useEffect(() => {
     const storedUser = storage.loadUser()
+    console.log('storedUser', storedUser)
     if (storedUser) {
       dispatch(setUser(storedUser))
     }
@@ -43,36 +47,19 @@ const App = () => {
     dispatch(initializeBlogs())
   }, [dispatch, blogs])
 
-  const showMessage = (message, error = false) => {
-    clearTimeout(oldTimeout)
-    dispatch(setNotification(message, error))
-    const timeout = setTimeout(
-      () => setNotification({ message: null, error: false }),
-      2000
-    )
-    setOldTimeout(timeout)
-  }
-  const handleLogin = async (event) => {
-    event.preventDefault()
-    try {
-      const newUser = await loginService.login({
-        username,
-        password,
-      })
-      console.log(newUser)
-      dispatch(setUser(newUser))
-      setUsername('')
-      setPassword('')
-      //setLoginFormVisible(false)
-      LoginFormRef.current.toggleVisibility()
-      showMessage('login success', false)
-    } catch (exception) {
-      showMessage('wrong username or password', true)
+  useEffect(() => {
+    clearTimeout(timeoutId)
+
+    if (newMessage) {
+      const newTimeoutId = setTimeout(
+        () => dispatch(setNotification(null)),
+        3000
+      )
+      setTimeoutId(newTimeoutId)
     }
-  }
+  }, [newMessage])
 
   const handleLike = async (blog) => {
-    console.log('user', user)
     await dispatch(likeBlog(blog))
     //dispatch(initializeBlogs())
     dispatch(setNotification(`blog ${blog.title} liked`, false))
@@ -86,7 +73,9 @@ const App = () => {
 
   const addBlog = async (blog) => {
     BlogFormRef.current.toggleVisibility()
-    dispatch(createBlog(blog))
+    console.log('userNOW', user)
+    await dispatch(createBlog(blog))
+    await dispatch(initializeBlogs())
     dispatch(setNotification(`blog ${blog.title} added`, false))
   }
 
@@ -96,50 +85,63 @@ const App = () => {
     dispatch(setNotification('logged out', false))
   }
 
-  const BlogFormRef = useRef()
-  const LoginFormRef = useRef()
+  const match = useMatch('/blogs/:id')
+  const blog = match ? blogs.find((blog) => blog.id === match.params.id) : null
 
   return (
-    <div>
-      <h1>Blogs</h1>
+    <Page>
+      <h1>Blog app</h1>
       <Notification message={newMessage.message} error={newMessage.error} />
+      <div>
+        <Navigation>
+          <StyledLink to={'/blogs'}>blogs</StyledLink>
+          <StyledLink to={'/users'}>users</StyledLink>
+        </Navigation>
+        <br />
+        {user ? (
+          <div>
+            {user.name} logged in
+            <RedButton onClick={() => logout()}>logout </RedButton>
+          </div>
+        ) : (
+          <StyledLink className="padding" to="/Login">
+            login
+          </StyledLink>
+        )}
+      </div>
 
-      {!user && (
-        <Togglable buttonLabel="log in" ref={LoginFormRef}>
-          <LoginForm
-            username={username}
-            password={password}
-            handleUsernameChange={({ target }) => setUsername(target.value)}
-            handlePasswordChange={({ target }) => setPassword(target.value)}
-            handleSubmit={handleLogin}
-          />
-        </Togglable>
-      )}
-
-      {user && (
-        <div>
-          <p>{user.name} logged in </p>
-          <button onClick={() => logout()}>logout </button>
-          <Togglable buttonLabel="new blog" ref={BlogFormRef}>
-            <BlogForm createBlog={addBlog} />
-          </Togglable>
-        </div>
-      )}
-
-      {
-        <div>
-          {blogs.map((blog) => (
-            <Blog
-              key={blog.id}
+      <Routes>
+        <Route path="/users/:id" element={<UserPage />} />
+        <Route
+          path="/blogs/:id"
+          element={
+            <BlogDetails
               blog={blog}
-              like={() => handleLike(blog)}
-              canRemove={user && blog.user.username === user.username}
-              remove={() => handleDelete(blog)}
+              user={user}
+              handleDelete={() => handleDelete(blog)}
+              handleLike={() => handleLike(blog)}
             />
-          ))}
-        </div>
-      }
-    </div>
+          }
+        />
+        <Route path="/users" element={<Users />} />
+        <Route path="/blogs" element={<Blogs blogs={blogs} />} />
+        <Route
+          path="/Login"
+          element={!user ? <Login /> : <Navigate replace to="/" />}
+        />
+        <Route
+          path="/"
+          element={
+            <Home
+              user={user}
+              blogs={blogs}
+              addBlog={addBlog}
+              BlogFormRef={BlogFormRef}
+            />
+          }
+        />
+      </Routes>
+    </Page>
   )
 }
 

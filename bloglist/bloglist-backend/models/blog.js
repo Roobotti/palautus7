@@ -11,6 +11,12 @@ const schema = mongoose.Schema({
   },
   url: String,
   likes: Number,
+  comments: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Comment',
+    },
+  ],
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
